@@ -23,7 +23,7 @@ def conectar_planilha():
     ]
     creds = Credentials.from_service_account_info(creds_dict, scopes=escopos)
     client = gspread.authorize(creds)
-    return client.open("srs_adulto_heterorrelato").sheet1  # LEMBRE-SE DE CRIAR ESTA PLANILHA NO DRIVE
+    return client.open("srs_heterorrelato").sheet1  # LEMBRE-SE DE CRIAR ESTA PLANILHA NO DRIVE
 
 try:
     planilha = conectar_planilha()
