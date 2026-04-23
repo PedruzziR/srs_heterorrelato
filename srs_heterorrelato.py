@@ -6,46 +6,46 @@ import json
 import gspread
 from google.oauth2.service_account import Credentials
 import datetime
+import base64 # <-- NOVA IMPORTAÇÃO PARA A MARCA D'ÁGUA INFALÍVEL
 
-# ================= BLOCO 1: DEFINIÇÃO DA MARCA D'ÁGUA (FORÇADA E DINÂMICA) =================
+# ================= BLOCO 1: MARCA D'ÁGUA SVG INFALÍVEL =================
 def inject_watermark(nome_paciente, id_sessao):
     paciente_display = nome_paciente if nome_paciente else "PACIENTE NÃO IDENTIFICADO"
     token_display = id_sessao if id_sessao else "TOKEN"
     
-    # Gerando múltiplos blocos para garantir o preenchimento de toda a tela
-    texto_marca = f"INSTRUMENTO SIGILOSO<br>{paciente_display}<br>{token_display}"
-    divs_repetidas = "".join([f"<div class='watermark-text'>{texto_marca}</div>" for _ in range(60)])
+    # Criando um SVG dinâmico com o texto
+    svg = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+        <g transform="translate(200,200) rotate(-35)">
+            <text text-anchor="middle" fill="rgba(150, 150, 150, 0.25)" font-size="20" font-family="Arial, sans-serif" font-weight="bold">
+                <tspan x="0" dy="-30">INSTRUMENTO SIGILOSO</tspan>
+                <tspan x="0" dy="30">{paciente_display}</tspan>
+                <tspan x="0" dy="30">{token_display}</tspan>
+            </text>
+        </g>
+    </svg>
+    """
     
+    # Convertendo o SVG para Base64 para não depender de arquivos externos
+    b64_svg = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
+    
+    # Injetando como uma camada pseudo-element (.stApp::before) que fica por cima de TUDO
     watermark_style = f"""
     <style>
-    .watermark-wrapper {{
-        position: fixed !important;
-        top: -10% !important;
-        left: -10% !important;
-        width: 120vw !important;
-        height: 120vh !important;
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url("data:image/svg+xml;base64,{b64_svg}");
+        background-repeat: repeat;
+        background-position: center;
+        pointer-events: none;
         z-index: 999999 !important;
-        pointer-events: none !important;
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        align-content: center !important;
-        overflow: hidden !important;
-    }}
-    .watermark-text {{
-        transform: rotate(-35deg) !important;
-        font-size: 24px !important;
-        font-weight: bold !important;
-        color: rgba(120, 120, 120, 0.15) !important;
-        white-space: nowrap !important;
-        text-align: center !important;
-        padding: 50px !important;
-        user-select: none !important;
     }}
     </style>
-    <div class="watermark-wrapper">
-        {divs_repetidas}
-    </div>
     """
     st.markdown(watermark_style, unsafe_allow_html=True)
 
@@ -110,7 +110,7 @@ def enviar_email_resultados(dados_avaliado, dados_respondente, resultados_brutos
     except:
         return False
 
-# ================= PERGUNTAS DO TESTE =================
+# ================= PERGUNTAS DO TESTE (COM AJUSTE DE GÊNERO) =================
 perguntas = [
     "Parece muito mais desconfortável em situações sociais do que quando está sozinho(a).",
     "As expressões em seu rosto não combinam com o que está dizendo.",
@@ -217,10 +217,10 @@ if st.session_state.avaliacao_concluida:
     st.success("Avaliação concluída e enviada com sucesso! Muito obrigado(a) pela sua colaboração.")
     st.stop()
 
-# ================= VALIDAÇÃO SILENCIOSA DO TOKEN E CAPTURA DE NOME =================
+# ================= VALIDAÇÃO SILENCIOSA DO TOKEN E SMART LINK =================
 parametros = st.query_params
 token_url = parametros.get("token", None)
-nome_na_url = parametros.get("nome", "") # Smart Link Captura
+nome_na_url = parametros.get("nome", "") # Captura do link inteligente
 
 if not token_url:
     st.warning("⚠️ Link de acesso inválido ou incompleto. Solicite um novo link à profissional.")
@@ -251,21 +251,21 @@ st.markdown(linha_fina, unsafe_allow_html=True)
 
 st.info("**Instrução:** Em cada questão, por favor escolha a alternativa que melhor descreva o comportamento do(a) paciente nos últimos 6 meses.")
 
-# --- IDENTIFICAÇÃO (FORA DO FORM PARA ATUALIZAÇÃO DINÂMICA DA MARCA D'ÁGUA) ---
+# --- IDENTIFICAÇÃO (FORA DO FORM PARA MARCA D'ÁGUA DINÂMICA) ---
 st.subheader("Dados do(a) Paciente (Avaliado/a)")
 nome_avaliado = st.text_input("Nome completo do(a) paciente *", value=nome_na_url)
 data_nasc_avaliado = st.date_input("Data de nascimento do(a) paciente *", format="DD/MM/YYYY", min_value=datetime.date(1900, 1, 1), max_value=datetime.date.today(), value=None)
-
+    
 st.divider()
 st.subheader("Dados do(a) Respondente")
 nome_respondente = st.text_input("Nome completo do(a) respondente *")
 vinculo_respondente = st.text_input("Vínculo / Parentesco (Ex: Pai, Mãe, Cônjuge) *")
-st.divider()
 
-# INJEÇÃO DA MARCA D'ÁGUA DINÂMICA
+# CHAMADA DA NOVA FUNÇÃO DA MARCA D'ÁGUA
 inject_watermark(nome_avaliado, token_url)
 
-# --- FORMULÁRIO DE PERGUNTAS ---
+st.divider()
+
 with st.form("form_srs2_heterorrelato"):
     respostas_coletadas = {}
     for index, texto_pergunta in enumerate(perguntas):
