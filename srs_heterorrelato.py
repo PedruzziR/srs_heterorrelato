@@ -7,6 +7,48 @@ import gspread
 from google.oauth2.service_account import Credentials
 import datetime
 
+# ================= BLOCO 1: DEFINIÇÃO DA MARCA D'ÁGUA (FORÇADA E DINÂMICA) =================
+def inject_watermark(nome_paciente, id_sessao):
+    paciente_display = nome_paciente if nome_paciente else "PACIENTE NÃO IDENTIFICADO"
+    token_display = id_sessao if id_sessao else "TOKEN"
+    
+    # Gerando múltiplos blocos para garantir o preenchimento de toda a tela
+    texto_marca = f"INSTRUMENTO SIGILOSO<br>{paciente_display}<br>{token_display}"
+    divs_repetidas = "".join([f"<div class='watermark-text'>{texto_marca}</div>" for _ in range(60)])
+    
+    watermark_style = f"""
+    <style>
+    .watermark-wrapper {{
+        position: fixed !important;
+        top: -10% !important;
+        left: -10% !important;
+        width: 120vw !important;
+        height: 120vh !important;
+        z-index: 999999 !important;
+        pointer-events: none !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        align-content: center !important;
+        overflow: hidden !important;
+    }}
+    .watermark-text {{
+        transform: rotate(-35deg) !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        color: rgba(120, 120, 120, 0.15) !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        padding: 50px !important;
+        user-select: none !important;
+    }}
+    </style>
+    <div class="watermark-wrapper">
+        {divs_repetidas}
+    </div>
+    """
+    st.markdown(watermark_style, unsafe_allow_html=True)
+
 # ================= CONFIGURAÇÕES DE E-MAIL =================
 SEU_EMAIL = st.secrets["EMAIL_USUARIO"]
 SENHA_DO_EMAIL = st.secrets["SENHA_USUARIO"]
@@ -68,7 +110,7 @@ def enviar_email_resultados(dados_avaliado, dados_respondente, resultados_brutos
     except:
         return False
 
-# ================= PERGUNTAS DO TESTE (COM AJUSTE DE GÊNERO) =================
+# ================= PERGUNTAS DO TESTE =================
 perguntas = [
     "Parece muito mais desconfortável em situações sociais do que quando está sozinho(a).",
     "As expressões em seu rosto não combinam com o que está dizendo.",
@@ -175,9 +217,10 @@ if st.session_state.avaliacao_concluida:
     st.success("Avaliação concluída e enviada com sucesso! Muito obrigado(a) pela sua colaboração.")
     st.stop()
 
-# ================= VALIDAÇÃO SILENCIOSA DO TOKEN =================
+# ================= VALIDAÇÃO SILENCIOSA DO TOKEN E CAPTURA DE NOME =================
 parametros = st.query_params
 token_url = parametros.get("token", None)
+nome_na_url = parametros.get("nome", "") # Smart Link Captura
 
 if not token_url:
     st.warning("⚠️ Link de acesso inválido ou incompleto. Solicite um novo link à profissional.")
@@ -208,17 +251,22 @@ st.markdown(linha_fina, unsafe_allow_html=True)
 
 st.info("**Instrução:** Em cada questão, por favor escolha a alternativa que melhor descreva o comportamento do(a) paciente nos últimos 6 meses.")
 
-with st.form("form_srs2_heterorrelato"):
-    st.subheader("Dados do(a) Paciente (Avaliado/a)")
-    nome_avaliado = st.text_input("Nome completo do(a) paciente *")
-    data_nasc_avaliado = st.date_input("Data de nascimento do(a) paciente *", format="DD/MM/YYYY", min_value=datetime.date(1900, 1, 1), max_value=datetime.date.today(), value=None)
-    
-    st.divider()
-    st.subheader("Dados do(a) Respondente")
-    nome_respondente = st.text_input("Nome completo do(a) respondente *")
-    vinculo_respondente = st.text_input("Vínculo / Parentesco (Ex: Pai, Mãe, Cônjuge) *")
-    st.divider()
+# --- IDENTIFICAÇÃO (FORA DO FORM PARA ATUALIZAÇÃO DINÂMICA DA MARCA D'ÁGUA) ---
+st.subheader("Dados do(a) Paciente (Avaliado/a)")
+nome_avaliado = st.text_input("Nome completo do(a) paciente *", value=nome_na_url)
+data_nasc_avaliado = st.date_input("Data de nascimento do(a) paciente *", format="DD/MM/YYYY", min_value=datetime.date(1900, 1, 1), max_value=datetime.date.today(), value=None)
 
+st.divider()
+st.subheader("Dados do(a) Respondente")
+nome_respondente = st.text_input("Nome completo do(a) respondente *")
+vinculo_respondente = st.text_input("Vínculo / Parentesco (Ex: Pai, Mãe, Cônjuge) *")
+st.divider()
+
+# INJEÇÃO DA MARCA D'ÁGUA DINÂMICA
+inject_watermark(nome_avaliado, token_url)
+
+# --- FORMULÁRIO DE PERGUNTAS ---
+with st.form("form_srs2_heterorrelato"):
     respostas_coletadas = {}
     for index, texto_pergunta in enumerate(perguntas):
         num_q = index + 1
