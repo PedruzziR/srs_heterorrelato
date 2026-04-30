@@ -252,14 +252,14 @@ st.markdown(linha_fina, unsafe_allow_html=True)
 st.info("**Instrução:** Em cada questão, por favor escolha a alternativa que melhor descreva o comportamento do(a) paciente nos últimos 6 meses.")
 
 # --- IDENTIFICAÇÃO (FORA DO FORM PARA MARCA D'ÁGUA DINÂMICA) ---
-st.subheader("Dados do(a) Paciente (Avaliado/a)")
-nome_avaliado = st.text_input("Nome completo do(a) paciente *", value=nome_na_url)
-data_nasc_avaliado = st.date_input("Data de nascimento do(a) paciente *", format="DD/MM/YYYY", min_value=datetime.date(1900, 1, 1), max_value=datetime.date.today(), value=None)
+st.subheader("Dados do(a) Paciente")
+nome_avaliado = st.text_input("Nome completo do(a) paciente", value=nome_na_url)
+data_nasc_avaliado = st.date_input("Data de nascimento do(a) paciente", format="DD/MM/YYYY", min_value=datetime.date(1900, 1, 1), max_value=datetime.date.today(), value=None)
     
 st.divider()
 st.subheader("Dados do(a) Respondente")
-nome_respondente = st.text_input("Nome completo do(a) respondente *")
-vinculo_respondente = st.text_input("Vínculo / Parentesco (Ex: Pai, Mãe, Cônjuge) *")
+nome_respondente = st.text_input("Nome completo do(a) respondente")
+vinculo_respondente = st.text_input("Vínculo / Parentesco (Ex: Pai, Mãe, Cônjuge, Avô, Avó)")
 
 # CHAMADA DA NOVA FUNÇÃO DA MARCA D'ÁGUA
 inject_watermark(nome_avaliado, token_url)
